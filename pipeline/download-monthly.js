@@ -41,7 +41,7 @@ const URL =
 
   const download = await downloadPromise;
 
-  const filePath = path.join(__dirname, "rejsekort_daily_chart_export.xlsx");
+  const filePath = path.join(__dirname, "rejsekort_monthly_chart_export.xlsx");
   await download.saveAs(filePath);
 
   console.log("Saved:", filePath);
