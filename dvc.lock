@@ -3,14 +3,19 @@ stages:
   script1:
     cmd: python pipeline/preprocessing.py
     deps:
-    - path: Data(update).xlsx
-      hash: md5
-      md5: 6cca61db5aa2b9e94e86780c31849887
-      size: 19033
     - path: pipeline/preprocessing.py
       hash: md5
-      md5: 2106bafe2edf8a838dd311929b95a4e5
-      size: 2888
+      md5: f0615fb99cc035a8b5246ef947bc3443
+      size: 2926
+    - path: pipeline/rejsekort_latest_year_daily_export.xlsx
+      hash: md5
+      md5: fc2ab81356cd3c1c765ffbbba3d1d464
+      size: 13090
+    outs:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: 512a68b770ea264ddb902682ac3d23f4
+      size: 84017
   script2:
     cmd: python pipeline/selected_arima.py
     deps:
@@ -56,14 +61,173 @@ stages:
       md5: 292b026b47180e21991024c097d0c2d6
       size: 4704
   ingest:
-    cmd: python pipeline/ingest.py
+    cmd: node pipeline/download-daily.js && python 
+      pipeline/prepare_daily_ingest.py
     deps:
-    - path: pipeline/ingest.py
+    - path: pipeline/download-daily.js
       hash: md5
-      md5: 664f0ab3cd8cfb7101eafddb5faa19a0
-      size: 7218
+      md5: a35aa372feb56599c5e0b2da474d6478
+      size: 4470
+    - path: pipeline/prepare_daily_ingest.py
+      hash: md5
+      md5: 658a2d7ab363a8ced28ec5548571317c
+      size: 652
     outs:
     - path: Data(update).xlsx
       hash: md5
-      md5: 5b6fb98d33343895ac170ad0b126e90c
-      size: 5193
+      md5: 2783bfe6740c946f5896e54aaea76d1f
+      size: 13089
+    - path: pipeline/rejsekort_latest_year_daily_export.xlsx
+      hash: md5
+      md5: 2783bfe6740c946f5896e54aaea76d1f
+      size: 13089
+  ingest_monthly_chart:
+    cmd: node pipeline/download-monthly.js
+    deps:
+    - path: pipeline/download-monthly.js
+      hash: md5
+      md5: 15e9180e19ff9fa296c52cc8f011ea62
+      size: 5986
+    outs:
+    - path: pipeline/rejsekort_monthly_chart_export.xlsx
+      hash: md5
+      md5: 63cbf04ac6208ae9af3f4ae37314fbef
+      size: 5953
+  ingest_monthly_extension:
+    cmd: node "pipeline/download-mothly-script 2.js"
+    deps:
+    - path: pipeline/download-mothly-script 2.js
+      hash: md5
+      md5: 5ba2788aa6232be2e88b0a834b51dbd8
+      size: 7419
+    outs:
+    - path: pipeline/rejsekort_monthly_export_extension_data.xlsx
+      hash: md5
+      md5: 43262da38d699e569b56fdb7c13b6f28
+      size: 5953
+  preprocess:
+    cmd: python pipeline/preprocessing.py
+    deps:
+    - path: Data(update).xlsx
+      hash: md5
+      md5: 2783bfe6740c946f5896e54aaea76d1f
+      size: 13089
+    - path: pipeline/preprocessing.py
+      hash: md5
+      md5: 8894fab1037076227d817b325e0cc00a
+      size: 3480
+    outs:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: bdadd9de9cdb3d97bfc786e02aea7197
+      size: 180205
+  selected_arima:
+    cmd: python pipeline/selected_arima.py
+    deps:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: bdadd9de9cdb3d97bfc786e02aea7197
+      size: 180205
+    - path: pipeline/selected_arima.py
+      hash: md5
+      md5: feb92d5645067a032fa0d6be1a41f16f
+      size: 1204
+    outs:
+    - path: sarima_metrics.csv
+      hash: md5
+      md5: 44bc7f9f38a4abac88be1e807c08a095
+      size: 96
+  autoarima:
+    cmd: python pipeline/autoarima.py
+    deps:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: bdadd9de9cdb3d97bfc786e02aea7197
+      size: 180205
+    - path: pipeline/autoarima.py
+      hash: md5
+      md5: 26c2a6c6b14820c81d7cc4a8d8ac8042
+      size: 1268
+    outs:
+    - path: autoarima_metrics.csv
+      hash: md5
+      md5: 4faed8d74572d1f382b68fffd1aeeafe
+      size: 95
+  prophet:
+    cmd: python pipeline/prophet_model.py
+    deps:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: bdadd9de9cdb3d97bfc786e02aea7197
+      size: 180205
+    - path: pipeline/prophet_model.py
+      hash: md5
+      md5: f4002e83466de79fdee02af7dfcb3455
+      size: 1185
+    outs:
+    - path: prophet_metrics.csv
+      hash: md5
+      md5: 9ecdbb09814f3a140b3480e732d65112
+      size: 95
+  bilstm:
+    cmd: python pipeline/BiLSTM.py
+    deps:
+    - path: data_cleaned.csv
+      hash: md5
+      md5: bdadd9de9cdb3d97bfc786e02aea7197
+      size: 180205
+    - path: pipeline/BiLSTM.py
+      hash: md5
+      md5: 331aa8e72991025f7a6ea8365508dad4
+      size: 2703
+    outs:
+    - path: bilstm_metrics.csv
+      hash: md5
+      md5: 9fffc5e2aa58970b4ce2b3c3d3120981
+      size: 35
+    - path: output.png
+      hash: md5
+      md5: 94090834292987b20849456ee8141a90
+      size: 55683
+  monthly:
+    cmd: node pipeline/download-monthly.js && node 
+      "pipeline/download-mothly-script 2.js" && python 
+      pipeline/monthly_forecast.py
+    deps:
+    - path: pipeline/download-monthly.js
+      hash: md5
+      md5: 5c16592edc7169238ea1357512bc2dc0
+      size: 1199
+    - path: pipeline/download-mothly-script 2.js
+      hash: md5
+      md5: d78e360dc16ce46f265dc6ee758b5535
+      size: 3639
+    - path: pipeline/monthly_forecast.py
+      hash: md5
+      md5: b101585335076a4e5af50e58ef78eaf8
+      size: 11532
+    outs:
+    - path: monthly_cleaned.csv
+      hash: md5
+      md5: 175b50f51b2fdf091757bc1aa2a72737
+      size: 327
+    - path: monthly_forecast.csv
+      hash: md5
+      md5: 54eee4e378ea6f65a06fcc25dcdbb6ac
+      size: 1059
+    - path: monthly_model_metrics.csv
+      hash: md5
+      md5: 1077efbf97780cbc4eb3fd8c5196ff71
+      size: 204
+    - path: monthly_trends.png
+      hash: md5
+      md5: b12923180e894fa5e469c3eab4eea0ea
+      size: 146773
+    - path: pipeline/rejsekort_monthly_chart_export.xlsx
+      hash: md5
+      md5: a5d7eac06f0b0b208b3ba6b4f589e594
+      size: 8198
+    - path: pipeline/rejsekort_monthly_export_extension_data.xlsx
+      hash: md5
+      md5: 05c85c8c0f6796c534d260244a0058e8
+      size: 5952

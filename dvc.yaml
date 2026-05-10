@@ -1,15 +1,14 @@
 stages:
-
-  # ── Stage 0: automated data ingestion from passagertal.dk ──────────────────
   ingest:
-    cmd: python pipeline/ingest.py
+    cmd: node pipeline/download-daily.js && python pipeline/prepare_daily_ingest.py
     deps:
-      - pipeline/ingest.py
+      - pipeline/download-daily.js
+      - pipeline/prepare_daily_ingest.py
     outs:
-      - Data(update).xlsx   # replaces the manually maintained file
+      - Data(update).xlsx
+      - pipeline/rejsekort_latest_year_daily_export.xlsx
 
-  # ── Stage 1: preprocessing (unchanged) ─────────────────────────────────────
-  script1:
+  preprocess:
     cmd: python pipeline/preprocessing.py
     deps:
       - Data(update).xlsx
@@ -17,29 +16,50 @@ stages:
     outs:
       - data_cleaned.csv
 
-  # ── Modelling stages (unchanged) ───────────────────────────────────────────
-  script2:
+  selected_arima:
     cmd: python pipeline/selected_arima.py
     deps:
       - data_cleaned.csv
       - pipeline/selected_arima.py
+    outs:
+      - sarima_metrics.csv
 
-  script3:
+  autoarima:
     cmd: python pipeline/autoarima.py
     deps:
       - data_cleaned.csv
       - pipeline/autoarima.py
+    outs:
+      - autoarima_metrics.csv
 
-  script4:
+  prophet:
     cmd: python pipeline/prophet_model.py
     deps:
       - data_cleaned.csv
       - pipeline/prophet_model.py
+    outs:
+      - prophet_metrics.csv
 
-  script5:
+  bilstm:
     cmd: python pipeline/BiLSTM.py
     deps:
       - data_cleaned.csv
       - pipeline/BiLSTM.py
     outs:
-      - output.png   # latest forecast plot — committed to git for README
+      - bilstm_metrics.csv
+      - output.png
+
+  monthly:
+    cmd: node pipeline/download-monthly.js && node "pipeline/download-mothly-script 2.js" && python pipeline/monthly_forecast.py
+    deps:
+      - pipeline/download-monthly.js
+      - pipeline/download-mothly-script 2.js
+      - pipeline/monthly_forecast.py
+    outs:
+      - pipeline/rejsekort_monthly_chart_export.xlsx
+      - pipeline/rejsekort_monthly_export_extension_data.xlsx:
+          persist: true
+      - monthly_cleaned.csv
+      - monthly_forecast.csv
+      - monthly_model_metrics.csv
+      - monthly_trends.png

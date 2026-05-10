@@ -1,93 +1,103 @@
-import os
-import warnings
-import sys
-import logging
+from pathlib import Path
+import re
 import pandas as pd
-import numpy as np
 
-if __name__ == "__main__":
-    warnings.filterwarnings("ignore")
-    np.random.seed(40)
+ROOT = Path(__file__).resolve().parents[1]
+BASELINE = ROOT / "Data.xlsx"
+UPDATE = ROOT / "Data(update).xlsx"
+OUT = ROOT / "data_cleaned.csv"
 
-    # Read the rejsekort csv file from the URL
-    xlsx_url = (
-        "https://github.com/sm-ak-r33/Predicting-Rejsekort-Price-Increase-2023/raw/refs/heads/main/Data.xlsx"
-    )
-    try:
-        data = pd.read_excel(xlsx_url)
-    except Exception as e:
-        logger.exception(
-            "Unable to download training & test excel, check your internet connection. Error: %s", e
-        )
+DATE_ALIASES = [
+    "Afgangsdato År - Måned - Dato",
+    "Afgangsdato",
+    "Dato",
+    "date",
+    "Date",
+]
+VALUE_ALIASES = [
+    "Antal Personrejser",
+    "Personrejser",
+    "Antal rejser",
+    "passengers",
+    "Passengers",
+]
 
-    # Read the wine-quality csv file from the URL
-    updated_xlsx_url = (
-        "https://github.com/sm-ak-r33/Predicting-Rejsekort-Price-Increase-2023/raw/refs/heads/main/Data(update).xlsx"
-    )
-    try:
-        data_update = pd.read_excel(updated_xlsx_url)
-    except Exception as e:
-        logger.exception(
-            "Unable to download training & test excel, check your internet connection. Error: %s", e
-        )
 
-def clean_dataframe(df):
-    """
-    Removes the index from the DataFrame and renames specific columns.
+def _flatten_columns(columns):
+    cleaned = []
+    for col in columns:
+        if isinstance(col, tuple):
+            parts = [str(x).strip() for x in col if str(x).strip() and not str(x).startswith("Unnamed")]
+            cleaned.append(" ".join(parts))
+        else:
+            cleaned.append(str(col).strip())
+    return cleaned
 
-    Args:
-        df (pd.DataFrame): The input DataFrame.
-    
-    Returns:
-        pd.DataFrame: The cleaned DataFrame.
-    """
-    # Remove the index by resetting it
-    df = df.reset_index(drop=True)
 
-    # Rename columns
-    rename_mapping = {
-        'Afgangsdato År - Måned - Dato': 'date',
-        'Antal Personrejser': 'passengers'
-    }
-    df = df.rename(columns=rename_mapping)
-
-    # Define the regex pattern for dd-mm-yyyy
-    pattern = r'^\d{2}-\d{2}-\d{4}$'
-
-    # Filter rows that match the pattern
-    df = df[df['date'].str.match(pattern, na=False)]
-
-    df['date']=pd.to_datetime(df['date'], dayfirst=True)
-
+def _read_excel(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame(columns=["date", "passengers"])
+    raw = pd.read_excel(path, header=None)
+    header_idx = 0
+    for idx in range(min(15, len(raw))):
+        row_text = " ".join(raw.iloc[idx].astype(str).fillna(""))
+        if any(alias in row_text for alias in DATE_ALIASES) or re.search(r"\d{2}-\d{2}-\d{4}", row_text):
+            header_idx = idx
+            break
+    df = pd.read_excel(path, header=header_idx)
+    df.columns = _flatten_columns(df.columns)
     return df
 
 
-def append_and_update(df1, df2):
-    """
-    Appends `df2` to `df1` while updating the 'passengers' column for the rows
-    in `df1` that have a matching 'date' in `df2`, without creating duplicate 'passengers' columns.
+def _choose_column(df: pd.DataFrame, aliases, prefer_date=False):
+    normalized = {re.sub(r"\s+", " ", str(c)).strip().lower(): c for c in df.columns}
+    for alias in aliases:
+        key = alias.lower()
+        if key in normalized:
+            return normalized[key]
+    for col in df.columns:
+        low = str(col).lower()
+        if prefer_date and any(token in low for token in ["dato", "date", "måned", "aar", "år"]):
+            return col
+        if not prefer_date and any(token in low for token in ["personrejser", "rejser", "passenger", "antal"]):
+            return col
+    return None
 
-    Args:
-        df1 (pd.DataFrame): The first DataFrame.
-        df2 (pd.DataFrame): The second DataFrame (updated results).
-    
-    Returns:
-        pd.DataFrame: The updated DataFrame with `df1`'s missing dates updated from `df2`.
-    """
 
-    # Merge the DataFrames on 'date' using an outer join
-    merged_df = pd.merge(df1, df2, on='date', how='outer', suffixes=('_df1', '_df2'))
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["date", "passengers"])
 
-    # Update the 'passengers' column, preferring values from df2
-    merged_df['passengers'] = merged_df['passengers_df2'].combine_first(merged_df['passengers_df1'])
+    date_col = _choose_column(df, DATE_ALIASES, prefer_date=True)
+    value_col = _choose_column(df, VALUE_ALIASES, prefer_date=False)
+    if date_col is None or value_col is None:
+        raise ValueError(f"Could not identify date/passenger columns. Found columns: {list(df.columns)}")
 
-    # Drop the intermediate columns
-    merged_df = merged_df.drop(columns=['passengers_df1', 'passengers_df2'])
+    out = df[[date_col, value_col]].copy()
+    out.columns = ["date", "passengers"]
+    out["date"] = pd.to_datetime(out["date"], dayfirst=True, errors="coerce")
+    out["passengers"] = (
+        out["passengers"].astype(str)
+        .str.replace(".", "", regex=False)
+        .str.replace(",", ".", regex=False)
+        .str.extract(r"(-?\d+(?:\.\d+)?)", expand=False)
+    )
+    out["passengers"] = pd.to_numeric(out["passengers"], errors="coerce")
+    out = out.dropna(subset=["date", "passengers"])
+    out = out.groupby("date", as_index=False)["passengers"].sum()
+    return out
 
-    return merged_df
 
-df1=clean_dataframe(data)
-df2=clean_dataframe(data_update)
-df=append_and_update(df1, df2)
+def append_and_update(base: pd.DataFrame, update: pd.DataFrame) -> pd.DataFrame:
+    df = pd.concat([base, update], ignore_index=True)
+    if df.empty:
+        raise ValueError("No usable rows found in Data.xlsx or Data(update).xlsx")
+    df = df.sort_values("date").drop_duplicates(subset=["date"], keep="last")
+    return df
 
-df.to_csv('data_cleaned.csv',index=False)
+
+if __name__ == "__main__":
+    base = clean_dataframe(_read_excel(BASELINE))
+    update = clean_dataframe(_read_excel(UPDATE))
+    final = append_and_update(base, update)
+    final.to_csv(OUT, index=False)

@@ -1,0 +1,12 @@
+{
+  "name": "predicting-rejsekort-price-increase",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "ingest:daily": "node pipeline/download-daily.js",
+    "ingest:monthly": "node pipeline/download-monthly.js && node \"pipeline/download-mothly-script 2.js\""
+  },
+  "dependencies": {
+    "playwright": "latest"
+  }
+}
