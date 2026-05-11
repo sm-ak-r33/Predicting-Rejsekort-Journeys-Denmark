@@ -1,0 +1,13 @@
+/data_cleaned.csv
+/sarima_metrics.csv
+/sarima_forecast.csv
+/autoarima_metrics.csv
+/autoarima_forecast.csv
+/prophet_metrics.csv
+/prophet_forecast.csv
+/bilstm_metrics.csv
+/bilstm_forecast.csv
+/bilstm_validation.png
+/daily_forecast.csv
+/daily_model_metrics.csv
+/daily_trends.png

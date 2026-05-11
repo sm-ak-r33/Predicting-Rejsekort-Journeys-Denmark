@@ -1,6 +1,5 @@
 from pathlib import Path
 import shutil
-import sys
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,4 +18,3 @@ except Exception as exc:
     raise RuntimeError(f"Daily export could not be opened as Excel: {SOURCE}") from exc
 
 shutil.copy2(SOURCE, TARGET)
-print(str(TARGET))

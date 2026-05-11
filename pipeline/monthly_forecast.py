@@ -1,4 +1,7 @@
 from pathlib import Path
+import os
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+import logging
 import math
 import re
 import warnings
@@ -8,7 +11,12 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
+from forecast_utils import apply_positive_history_floor
+
 warnings.filterwarnings("ignore")
+logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
+logging.getLogger("prophet").setLevel(logging.WARNING)
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 ROOT = Path(__file__).resolve().parents[1]
 PIPELINE = Path(__file__).resolve().parent
@@ -17,9 +25,11 @@ MONTHLY_FILES = [
     PIPELINE / "rejsekort_hentdata.xlsx",
     PIPELINE / "rejsekort_monthly_export_extension_data.xlsx",
 ]
-OUT_CSV = ROOT / "monthly_cleaned.csv"
-OUT_FORECAST = ROOT / "monthly_forecast.csv"
-OUT_PNG = ROOT / "monthly_trends.png"
+RESULTS_MONTHLY = ROOT / "results" / "monthly"
+OUT_CSV = RESULTS_MONTHLY / "monthly_cleaned.csv"
+OUT_FORECAST = RESULTS_MONTHLY / "monthly_forecast.csv"
+OUT_METRICS = RESULTS_MONTHLY / "monthly_model_metrics.csv"
+OUT_PNG = RESULTS_MONTHLY / "monthly_trends.png"
 
 MONTHS_DA = {
     "jan": 1, "januar": 1,
@@ -225,7 +235,7 @@ def forecasts(df: pd.DataFrame, horizon=12):
                 Dense(1),
             ])
             model.compile(optimizer="adam", loss="mse")
-            model.fit(X_train, y_train, epochs=60, batch_size=8, verbose=0, callbacks=[EarlyStopping(patience=8, restore_best_weights=True)])
+            model.fit(X_train, y_train, epochs=60, batch_size=8, verbose=0, callbacks=[EarlyStopping(monitor="loss", patience=8, restore_best_weights=True)])
             pred = scaler.inverse_transform(model.predict(X_test, verbose=0)).flatten()
             eval_predictions["BiLSTM"] = pd.Series(pred[-len(test):], index=test.index)
             rolling = scaled.copy().tolist()
@@ -247,34 +257,49 @@ def forecasts(df: pd.DataFrame, horizon=12):
     metrics = metric_frame(test, eval_predictions) if len(test) else pd.DataFrame()
     forecast_df = pd.DataFrame({"month": future_idx})
     for name, values in future_predictions.items():
-        forecast_df[name] = np.maximum(np.asarray(values, dtype=float), 0)
+        forecast_df[name] = apply_positive_history_floor(values, series, quantile=0.05, multiplier=0.70)
     return series, forecast_df, metrics
 
 
 def plot_monthly(series, forecast_df, metrics):
-    plt.figure(figsize=(13, 7))
-    plt.plot(series.index, series.values, label="Actual monthly passengers")
+    fig, ax = plt.subplots(figsize=(14, 7))
+    ax.plot(series.index, series.values, linewidth=2.0, label="Actual monthly passengers")
+
+    # Bridge each forecast from the final observed month so the forecast horizon
+    # is visually connected to the historical trend.
+    last_actual = pd.DataFrame({"month": [series.index.max()], "value": [series.iloc[-1]]})
     for col in forecast_df.columns:
-        if col != "month":
-            plt.plot(forecast_df["month"], forecast_df[col], linestyle="--", label=f"{col} forecast")
+        if col == "month":
+            continue
+        plotted = forecast_df[["month", col]].dropna().rename(columns={col: "value"})
+        plotted = pd.concat([last_actual, plotted], ignore_index=True)
+        ax.plot(plotted["month"], plotted["value"], linestyle="--", marker="o", markersize=3, label=f"{col} forecast")
+
+    if not forecast_df.empty:
+        ax.axvline(series.index.max(), linestyle=":", linewidth=1.2, label="Forecast starts")
+
     if not metrics.empty:
         best = metrics.iloc[0]["algorithm"]
-        plt.title(f"Rejsekort monthly trend and 12-month forecast — best validation RMSE: {best}")
+        ax.set_title(f"Rejsekort monthly trend and 12-month forecast — best validation RMSE: {best}")
     else:
-        plt.title("Rejsekort monthly trend and 12-month forecast")
-    plt.xlabel("Month")
-    plt.ylabel("Passenger journeys")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(OUT_PNG, dpi=180)
-    plt.close()
+        ax.set_title("Rejsekort monthly trend and 12-month forecast")
+    ax.set_xlabel("Month")
+    ax.set_ylabel("Passenger journeys")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(OUT_PNG, dpi=200)
+    plt.close(fig)
 
 
 if __name__ == "__main__":
+    RESULTS_MONTHLY.mkdir(parents=True, exist_ok=True)
     monthly = load_monthly_data()
     monthly.to_csv(OUT_CSV, index=False)
     series, forecast_df, metrics = forecasts(monthly)
     forecast_df.to_csv(OUT_FORECAST, index=False)
-    if not metrics.empty:
-        metrics.to_csv(ROOT / "monthly_model_metrics.csv", index=False)
+    if metrics.empty:
+        metrics = pd.DataFrame(columns=["algorithm", "rmse", "mae"])
+    metrics.to_csv(OUT_METRICS, index=False)
     plot_monthly(series, forecast_df, metrics)

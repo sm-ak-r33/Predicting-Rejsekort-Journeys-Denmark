@@ -1,0 +1,45 @@
+name: Rejsekort monthly forecast refresh
+
+on:
+  schedule:
+    # Run once per month at 04:00 UTC on the first day of the month.
+    - cron: "0 4 1 * *"
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install
+          npx playwright install chromium --with-deps
+
+      - name: Run full DVC pipeline
+        run: python -m dvc repro --force
+
+      - name: Commit updated outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dvc.lock Data\(update\).xlsx pipeline/*.xlsx results/daily results/monthly README.md
+          git diff --cached --quiet || git commit -m "ci: update Rejsekort forecasts [skip ci]"
+          git push

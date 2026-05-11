@@ -14,40 +14,65 @@ stages:
       - Data(update).xlsx
       - pipeline/preprocessing.py
     outs:
-      - data_cleaned.csv
+      - results/daily/data_cleaned.csv
 
   selected_arima:
     cmd: python pipeline/selected_arima.py
     deps:
-      - data_cleaned.csv
+      - results/daily/data_cleaned.csv
       - pipeline/selected_arima.py
+      - pipeline/forecast_utils.py
     outs:
-      - sarima_metrics.csv
+      - results/daily/sarima_metrics.csv
+      - results/daily/sarima_forecast.csv
 
   autoarima:
     cmd: python pipeline/autoarima.py
     deps:
-      - data_cleaned.csv
+      - results/daily/data_cleaned.csv
       - pipeline/autoarima.py
+      - pipeline/forecast_utils.py
     outs:
-      - autoarima_metrics.csv
+      - results/daily/autoarima_metrics.csv
+      - results/daily/autoarima_forecast.csv
 
   prophet:
     cmd: python pipeline/prophet_model.py
     deps:
-      - data_cleaned.csv
+      - results/daily/data_cleaned.csv
       - pipeline/prophet_model.py
     outs:
-      - prophet_metrics.csv
+      - results/daily/prophet_metrics.csv
+      - results/daily/prophet_forecast.csv
 
   bilstm:
     cmd: python pipeline/BiLSTM.py
     deps:
-      - data_cleaned.csv
+      - results/daily/data_cleaned.csv
       - pipeline/BiLSTM.py
     outs:
-      - bilstm_metrics.csv
-      - output.png
+      - results/daily/bilstm_metrics.csv
+      - results/daily/bilstm_forecast.csv
+      - results/daily/bilstm_validation.png
+
+  daily_forecast:
+    cmd: python pipeline/daily_forecast.py
+    deps:
+      - results/daily/data_cleaned.csv
+      - results/daily/sarima_metrics.csv
+      - results/daily/sarima_forecast.csv
+      - results/daily/autoarima_metrics.csv
+      - results/daily/autoarima_forecast.csv
+      - results/daily/prophet_metrics.csv
+      - results/daily/prophet_forecast.csv
+      - results/daily/bilstm_metrics.csv
+      - results/daily/bilstm_forecast.csv
+      - pipeline/daily_forecast.py
+      - pipeline/forecast_utils.py
+    outs:
+      - results/daily/daily_forecast.csv
+      - results/daily/daily_model_metrics.csv
+      - results/daily/daily_trends.png
 
   monthly:
     cmd: node pipeline/download-monthly.js && node "pipeline/download-mothly-script 2.js" && python pipeline/monthly_forecast.py
@@ -55,11 +80,12 @@ stages:
       - pipeline/download-monthly.js
       - pipeline/download-mothly-script 2.js
       - pipeline/monthly_forecast.py
+      - pipeline/forecast_utils.py
     outs:
       - pipeline/rejsekort_monthly_chart_export.xlsx
       - pipeline/rejsekort_monthly_export_extension_data.xlsx:
           persist: true
-      - monthly_cleaned.csv
-      - monthly_forecast.csv
-      - monthly_model_metrics.csv
-      - monthly_trends.png
+      - results/monthly/monthly_cleaned.csv
+      - results/monthly/monthly_forecast.csv
+      - results/monthly/monthly_model_metrics.csv
+      - results/monthly/monthly_trends.png

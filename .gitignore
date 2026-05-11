@@ -7,13 +7,3 @@ node_modules/
 mlruns/
 .dvc/tmp/
 /Data(update).xlsx
-/data_cleaned.csv
-/sarima_metrics.csv
-/autoarima_metrics.csv
-/prophet_metrics.csv
-/bilstm_metrics.csv
-/output.png
-/monthly_cleaned.csv
-/monthly_forecast.csv
-/monthly_model_metrics.csv
-/monthly_trends.png
