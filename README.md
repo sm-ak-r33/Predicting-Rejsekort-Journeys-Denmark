@@ -1,6 +1,6 @@
 # Predicting Rejsekort Journeys
 
-This repository downloads Rejsekort passenger journey data from passagertal.dk and runs daily and monthly forecasting pipelines.
+This repository automatically downloads Rejsekort passenger journey data from passagertal.dk and runs daily and monthly forecasting pipelines.
 
 
 ```bash
@@ -8,6 +8,8 @@ node pipeline/download-daily.js && python pipeline/prepare_daily_ingest.py
 ```
 
 The JavaScript download scripts remain the ingestion layer. They are kept in headless mode, and the Python pipeline is built around the Excel files they download.
+
+The details for feature engineering for the statistical models can be found in the paper [here](https://github.com/sm-ak-r33/Predicting-Rejsekort-Price-Increase-2023/blob/main/rejsekort.pdf)  
 
 Daily preprocessing rejects non-daily hierarchy rows from the Excel export. The downloaded crosstab can contain rows like year totals and month totals in the same date hierarchy. Pandas/dateutil can accidentally interpret a value like `2024` as `2024-01-01`, which creates artificial January spikes. The cleaner now only accepts true day-level dates and drops aggregate spikes before modelling.
 
