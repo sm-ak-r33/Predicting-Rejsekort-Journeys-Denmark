@@ -75,15 +75,16 @@ stages:
       - results/daily/daily_trends.png
 
   monthly:
-    cmd: node pipeline/download-monthly.js && node "pipeline/download-mothly-script 2.js" && python pipeline/monthly_forecast.py
+    cmd: python pipeline/ingest_monthly.py && python pipeline/monthly_forecast.py
     deps:
       - pipeline/download-monthly.js
       - pipeline/download-mothly-script 2.js
+      - pipeline/ingest_monthly.py
       - pipeline/monthly_forecast.py
-      - pipeline/forecast_utils.py
     outs:
-      - pipeline/rejsekort_monthly_chart_export.xlsx
-      - pipeline/rejsekort_monthly_export_extension_data.xlsx:
+      - results/monthly/raw/rejsekort_monthly_chart_export.xlsx:
+          persist: true
+      - results/monthly/raw/rejsekort_monthly_export_extension_data.xlsx:
           persist: true
       - results/monthly/monthly_cleaned.csv
       - results/monthly/monthly_forecast.csv
