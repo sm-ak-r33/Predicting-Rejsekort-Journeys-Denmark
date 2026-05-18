@@ -48,13 +48,14 @@ jobs:
       - name: Install Node dependencies
         run: npm install
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright Chromium headless shell
+        run: npx playwright install --with-deps --only-shell chromium
 
-      - name: Check Playwright install
+      - name: Verify Playwright browser install
         run: |
           npx playwright --version
-          ls -la ~/.cache/ms-playwright || true
+          npx playwright install --list
+          node -e "const { chromium } = require('playwright'); console.log('Chromium path:', chromium.executablePath())"
 
 
       - name: Run monthly DVC pipeline
