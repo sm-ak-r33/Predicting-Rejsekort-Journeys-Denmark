@@ -1,11 +1,11 @@
 from pathlib import Path
 import os
-import shutil
-
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import logging
+import shutil
 import warnings
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,12 +22,12 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DAILY = ROOT / "results" / "daily"
 DOCS_ASSETS = ROOT / "docs" / "assets"
-
 DATA = RESULTS_DAILY / "data_cleaned.csv"
 OUT_PNG = RESULTS_DAILY / "bilstm_validation.png"
 OUT_README_PNG = DOCS_ASSETS / "bilstm_validation.png"
 OUT_METRICS = RESULTS_DAILY / "bilstm_metrics.csv"
 OUT_FORECAST = RESULTS_DAILY / "bilstm_forecast.csv"
+OUT_VALIDATION = RESULTS_DAILY / "bilstm_validation_predictions.csv"
 HORIZON_DAYS = 30
 
 
@@ -61,9 +61,9 @@ if __name__ == "__main__":
         raise ValueError("results/daily/data_cleaned.csv has no usable rows.")
 
     series = df.set_index("date")["passengers"].asfreq("D").interpolate(limit_direction="both")
-
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled = scaler.fit_transform(series.values.reshape(-1, 1))
+
     look_back = min(30, max(7, len(series) // 10))
     X, y = create_sequences(scaled, look_back)
     if len(X) < 10:
@@ -103,7 +103,9 @@ if __name__ == "__main__":
     pd.DataFrame([metrics]).to_csv(OUT_METRICS, index=False)
 
     dates = series.index[look_back + split:]
-    validation = pd.DataFrame({"date": dates, "actual": y_true, "prediction": y_pred}).dropna()
+    validation = pd.DataFrame({"date": dates, "actual": y_true, "bilstm": y_pred}).dropna()
+    validation.to_csv(OUT_VALIDATION, index=False)
+
     last_year_start = validation["date"].max() - pd.Timedelta(days=365)
     validation_tail = validation[validation["date"] >= last_year_start]
 
@@ -111,7 +113,7 @@ if __name__ == "__main__":
     ax.plot(validation_tail["date"], validation_tail["actual"], linewidth=1.8, label="Actual validation data")
     rolling = validation_tail.set_index("date")["actual"].rolling(7, min_periods=1).mean()
     ax.plot(rolling.index, rolling.values, linewidth=2.1, label="Actual 7-day average")
-    ax.plot(validation_tail["date"], validation_tail["prediction"], linestyle="--", linewidth=1.8, label="BiLSTM validation forecast")
+    ax.plot(validation_tail["date"], validation_tail["bilstm"], linestyle="--", linewidth=1.8, label="BiLSTM validation forecast")
     ax.set_title("Rejsekort daily BiLSTM validation")
     ax.set_xlabel("Date")
     ax.set_ylabel("Passenger journeys")

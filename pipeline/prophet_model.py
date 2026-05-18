@@ -1,6 +1,7 @@
 from pathlib import Path
 import logging
 import warnings
+
 import numpy as np
 import pandas as pd
 from prophet import Prophet
@@ -9,11 +10,13 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 warnings.filterwarnings("ignore")
 logging.getLogger("cmdstanpy").setLevel(logging.ERROR)
 logging.getLogger("prophet").setLevel(logging.ERROR)
+
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DAILY = ROOT / "results" / "daily"
 DATA = RESULTS_DAILY / "data_cleaned.csv"
 OUT = RESULTS_DAILY / "prophet_metrics.csv"
 OUT_FORECAST = RESULTS_DAILY / "prophet_forecast.csv"
+OUT_VALIDATION = RESULTS_DAILY / "prophet_validation.csv"
 HORIZON_DAYS = 30
 
 
@@ -30,7 +33,7 @@ def eval_metrics(actual, pred):
 if __name__ == "__main__":
     RESULTS_DAILY.mkdir(parents=True, exist_ok=True)
     df = pd.read_csv(DATA, parse_dates=["date"]).sort_values("date")
-    df = df[df["date"] >= "2021-01-01"][["date", "passengers"]]
+    df = df[df["date"] >= "2021-01-01"] [["date", "passengers"]]
     if df.empty:
         raise ValueError("results/daily/data_cleaned.csv has no usable rows from 2021 onward.")
 
@@ -43,9 +46,22 @@ if __name__ == "__main__":
 
     if len(test) >= 2:
         forecast = model.predict(pd.DataFrame({"ds": test["ds"]}))
-        pd.DataFrame([eval_metrics(test["y"].values, forecast["yhat"].values)]).to_csv(OUT, index=False)
+        pred = np.maximum(forecast["yhat"].values, 0)
+        pd.DataFrame([eval_metrics(test["y"].values, pred)]).to_csv(OUT, index=False)
+        pd.DataFrame({
+            "date": test["ds"].values,
+            "actual": test["y"].values,
+            "prophet": pred,
+        }).to_csv(OUT_VALIDATION, index=False)
     else:
-        pd.DataFrame([{"algorithm": "Prophet", "rmse": np.nan, "mae": np.nan, "mape": np.nan, "r2": np.nan}]).to_csv(OUT, index=False)
+        pd.DataFrame([{
+            "algorithm": "Prophet",
+            "rmse": np.nan,
+            "mae": np.nan,
+            "mape": np.nan,
+            "r2": np.nan,
+        }]).to_csv(OUT, index=False)
+        pd.DataFrame(columns=["date", "actual", "prophet"]).to_csv(OUT_VALIDATION, index=False)
 
     full_model = Prophet(weekly_seasonality=True, yearly_seasonality=True, daily_seasonality=False)
     full_model.fit(prophet_df)

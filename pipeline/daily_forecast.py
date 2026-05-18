@@ -25,6 +25,12 @@ FORECAST_FILES = [
     (RESULTS_DAILY / "prophet_forecast.csv", "prophet"),
     (RESULTS_DAILY / "bilstm_forecast.csv", "bilstm"),
 ]
+VALIDATION_FILES = [
+    (RESULTS_DAILY / "sarima_validation.csv", "sarima"),
+    (RESULTS_DAILY / "autoarima_validation.csv", "autoarima"),
+    (RESULTS_DAILY / "prophet_validation.csv", "prophet"),
+    (RESULTS_DAILY / "bilstm_validation_predictions.csv", "bilstm"),
+]
 METRIC_FILES = [
     RESULTS_DAILY / "sarima_metrics.csv",
     RESULTS_DAILY / "autoarima_metrics.csv",
@@ -68,8 +74,10 @@ def clean_forecast_frame(path, model_name):
             df = df.rename(columns={possible_dates[0]: "date"})
         else:
             raise ValueError("No date column found in %s" % path.name)
+
     df["date"] = _to_datetime(df["date"])
     df = df.dropna(subset=["date"])
+
     if model_name not in df.columns:
         candidates = [
             c for c in df.columns
@@ -78,9 +86,46 @@ def clean_forecast_frame(path, model_name):
         if not candidates:
             raise ValueError("No numeric forecast value column found in %s" % path.name)
         df = df.rename(columns={candidates[0]: model_name})
+
     df[model_name] = pd.to_numeric(df[model_name], errors="coerce")
     df = df.dropna(subset=[model_name])
     return df[["date", model_name]].drop_duplicates("date").sort_values("date")
+
+
+def clean_validation_frame(path, model_name):
+    df = pd.read_csv(path)
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    if "date" not in df.columns:
+        possible_dates = [c for c in df.columns if c == "ds" or "date" in c]
+        if possible_dates:
+            df = df.rename(columns={possible_dates[0]: "date"})
+        else:
+            raise ValueError("No date column found in %s" % path.name)
+
+    if model_name not in df.columns:
+        if "prediction" in df.columns:
+            df = df.rename(columns={"prediction": model_name})
+        else:
+            numeric_candidates = [
+                c for c in df.columns
+                if c not in {"date", "actual"}
+                and pd.to_numeric(df[c], errors="coerce").notna().sum() > 0
+            ]
+            if not numeric_candidates:
+                raise ValueError("No validation prediction column found in %s" % path.name)
+            df = df.rename(columns={numeric_candidates[0]: model_name})
+
+    keep = ["date", model_name]
+    if "actual" in df.columns:
+        keep.append("actual")
+
+    df["date"] = _to_datetime(df["date"])
+    df[model_name] = pd.to_numeric(df[model_name], errors="coerce")
+    if "actual" in df.columns:
+        df["actual"] = pd.to_numeric(df["actual"], errors="coerce")
+
+    df = df.dropna(subset=["date", model_name])
+    return df[keep].drop_duplicates("date").sort_values("date")
 
 
 def load_forecasts(actual=None):
@@ -128,6 +173,52 @@ def load_forecasts(actual=None):
 
     combined.to_csv(OUT_FORECAST, index=False)
     return combined
+
+
+def load_validation_predictions(actual=None):
+    combined = None
+    actual_from_files = None
+
+    for path, model_name in VALIDATION_FILES:
+        if not path.exists():
+            continue
+        df = clean_validation_frame(path, model_name)
+        if df.empty:
+            continue
+
+        if "actual" in df.columns:
+            file_actual = df[["date", "actual"]].copy()
+            actual_from_files = file_actual if actual_from_files is None else actual_from_files.merge(
+                file_actual,
+                on="date",
+                how="outer",
+                suffixes=("", "_new"),
+            )
+            if "actual_new" in actual_from_files.columns:
+                actual_from_files["actual"] = actual_from_files["actual"].combine_first(actual_from_files["actual_new"])
+                actual_from_files = actual_from_files.drop(columns=["actual_new"])
+
+        df = df[["date", model_name]]
+        combined = df if combined is None else combined.merge(df, on="date", how="outer")
+
+    if combined is None or combined.empty:
+        return pd.DataFrame(columns=["date", "actual", "ensemble_mean"])
+
+    combined = combined.sort_values("date")
+
+    if actual is not None and not actual.empty:
+        actual_lookup = actual[["date", "passengers"]].rename(columns={"passengers": "actual"})
+        combined = combined.merge(actual_lookup, on="date", how="left")
+    elif actual_from_files is not None and not actual_from_files.empty:
+        combined = combined.merge(actual_from_files, on="date", how="left")
+    else:
+        combined["actual"] = np.nan
+
+    model_cols = [c for c in combined.columns if c not in {"date", "actual"}]
+    if model_cols:
+        combined["ensemble_mean"] = combined[model_cols].mean(axis=1, skipna=True)
+
+    return combined.dropna(subset=["date"]).sort_values("date")
 
 
 def load_metrics():
@@ -233,7 +324,7 @@ def _plot_daily_forecast_lines(ax, actual_tail, forecasts, include_legend=True):
             _millions(forecast_max),
             alpha=0.12,
             color="#d62728",
-            label="Model range" if include_legend else None,
+            label="Model forecast range" if include_legend else None,
         )
 
     for col in model_cols:
@@ -262,6 +353,83 @@ def _plot_daily_forecast_lines(ax, actual_tail, forecasts, include_legend=True):
                 color=MODEL_COLORS["ensemble_mean"],
                 label="Ensemble mean forecast" if include_legend else None,
             )
+
+
+def _plot_daily_validation_lines(ax, validation):
+    if validation is None or validation.empty:
+        ax.text(0.5, 0.5, "No validation prediction CSVs found", ha="center", va="center")
+        ax.set_title("Validation close-up")
+        return
+
+    validation = validation.dropna(subset=["date"]).sort_values("date").copy()
+    if validation.empty:
+        ax.text(0.5, 0.5, "No validation rows found", ha="center", va="center")
+        ax.set_title("Validation close-up")
+        return
+
+    zoom_start = validation["date"].max() - pd.Timedelta(days=90)
+    zoom = validation[validation["date"] >= zoom_start].copy()
+    if zoom.empty:
+        zoom = validation.tail(90).copy()
+
+    model_cols = [c for c in zoom.columns if c not in {"date", "actual", "ensemble_mean"}]
+    if model_cols:
+        model_values = zoom[model_cols]
+        valid_min = model_values.min(axis=1).values
+        valid_max = model_values.max(axis=1).values
+        ax.fill_between(
+            zoom["date"],
+            _millions(valid_min),
+            _millions(valid_max),
+            alpha=0.12,
+            color="#d62728",
+            label="Validation model range",
+        )
+
+    if "actual" in zoom.columns and zoom["actual"].notna().any():
+        actual_zoom = zoom.dropna(subset=["actual"])
+        ax.fill_between(actual_zoom["date"], _millions(actual_zoom["actual"].values), alpha=0.18, color="#3a3a3a")
+        ax.plot(
+            actual_zoom["date"],
+            _millions(actual_zoom["actual"].values),
+            color="#2f2f2f",
+            linewidth=1.4,
+            alpha=0.72,
+            label="Actual validation",
+        )
+        rolling = actual_zoom.set_index("date")["actual"].rolling(7, min_periods=1).mean()
+        ax.plot(rolling.index, _millions(rolling.values), color="#111111", linewidth=2.2, label="Actual 7-day average")
+
+    for col in model_cols:
+        plotted = zoom[["date", col]].dropna()
+        if plotted.empty:
+            continue
+        ax.plot(
+            plotted["date"],
+            _millions(plotted[col].values),
+            linestyle="--",
+            linewidth=1.4,
+            alpha=0.72,
+            color=MODEL_COLORS.get(col, "#777777"),
+            label="%s validation" % MODEL_LABELS.get(col, col),
+        )
+
+    if "ensemble_mean" in zoom.columns and zoom["ensemble_mean"].notna().any():
+        plotted = zoom[["date", "ensemble_mean"]].dropna()
+        ax.plot(
+            plotted["date"],
+            _millions(plotted["ensemble_mean"].values),
+            linewidth=2.8,
+            marker="o",
+            markersize=4,
+            color=MODEL_COLORS["ensemble_mean"],
+            label="Ensemble mean validation",
+        )
+
+    ax.set_title("Validation close-up only — actual vs validation predictions")
+    ax.set_ylabel("Journeys (millions)")
+    _format_date_axis(ax, interval=14)
+    ax.legend(ncol=2, loc="upper left", frameon=True)
 
 
 def _draw_metrics_table(ax, metrics):
@@ -306,7 +474,7 @@ def _draw_metrics_table(ax, metrics):
         ax.set_title("Validation metrics", fontweight="bold")
 
 
-def plot_daily(actual, forecasts, metrics):
+def plot_daily(actual, forecasts, validation, metrics):
     plt.rcParams.update({
         "font.size": 10,
         "axes.titlesize": 12,
@@ -342,7 +510,7 @@ def plot_daily(actual, forecasts, metrics):
             ax_main.axvline(last_date, linestyle=":", linewidth=1.4, color="#777777", label="Forecast starts")
 
     _plot_daily_forecast_lines(ax_main, actual_tail, forecasts, include_legend=True)
-    ax_main.set_title("Latest daily history with forecast range")
+    ax_main.set_title("Latest daily history with 30-day future forecast")
     ax_main.set_ylabel("Journeys (millions)")
     ax_main.grid(True, alpha=0.22)
     ax_main.legend(ncol=4, loc="upper left", frameon=True)
@@ -352,21 +520,8 @@ def plot_daily(actual, forecasts, metrics):
         label.set_rotation(35)
         label.set_ha("right")
 
-    if actual_tail is not None and not actual_tail.empty:
-        zoom_start = actual_tail["date"].max() - pd.Timedelta(days=90)
-        zoom_actual = actual_tail[actual_tail["date"] >= zoom_start].copy()
-        ax_zoom.fill_between(zoom_actual["date"], _millions(zoom_actual["passengers"].values), alpha=0.18, color="#3a3a3a")
-        ax_zoom.plot(zoom_actual["date"], _millions(zoom_actual["passengers"].values), color="#2f2f2f", linewidth=1.4, alpha=0.72, label="Actual daily")
-        zoom_smoothed = zoom_actual.set_index("date")["passengers"].rolling(7, min_periods=1).mean()
-        ax_zoom.plot(zoom_smoothed.index, _millions(zoom_smoothed.values), color="#111111", linewidth=2.2, label="Actual 7-day average")
-        ax_zoom.axvline(actual_tail["date"].max(), linestyle=":", linewidth=1.4, color="#777777")
-    else:
-        zoom_actual = actual_tail
-
-    _plot_daily_forecast_lines(ax_zoom, zoom_actual, forecasts, include_legend=False)
-    ax_zoom.set_title("Recent close-up + 30-day forecast")
-    ax_zoom.set_ylabel("Journeys (millions)")
-    _format_date_axis(ax_zoom, interval=14)
+    # Important: the zoom panel is validation-only. No future forecast lines are drawn here.
+    _plot_daily_validation_lines(ax_zoom, validation)
 
     _draw_metrics_table(ax_table, metrics)
 
@@ -379,5 +534,6 @@ if __name__ == "__main__":
     RESULTS_DAILY.mkdir(parents=True, exist_ok=True)
     actual = load_actuals()
     forecasts = load_forecasts(actual)
+    validation = load_validation_predictions(actual)
     metrics = load_metrics()
-    plot_daily(actual, forecasts, metrics)
+    plot_daily(actual, forecasts, validation, metrics)

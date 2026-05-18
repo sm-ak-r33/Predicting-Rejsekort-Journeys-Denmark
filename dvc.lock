@@ -130,8 +130,8 @@ stages:
       size: 3289
     - path: pipeline/selected_arima.py
       hash: md5
-      md5: e7d6f761ee209d6c0b2db9c55229354f
-      size: 2720
+      md5: 83b8c4275538ecd0c9b77571c88d5385
+      size: 3111
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -150,8 +150,8 @@ stages:
     deps:
     - path: pipeline/autoarima.py
       hash: md5
-      md5: 9111789d97358a1a570b3591fc32fe43
-      size: 2794
+      md5: cd9cbc1eb84577615c19afadada9e963
+      size: 3193
     - path: pipeline/forecast_utils.py
       hash: md5
       md5: deca8657c82917695a25a12e2b557691
@@ -174,8 +174,8 @@ stages:
     deps:
     - path: pipeline/prophet_model.py
       hash: md5
-      md5: 4afea19271cb9e49fc6ca4f8f66125ba
-      size: 2329
+      md5: 6746fef660f68f63a8fecd2abf810e6c
+      size: 2770
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -187,15 +187,15 @@ stages:
       size: 900
     - path: results/daily/prophet_metrics.csv
       hash: md5
-      md5: 99fabc4bf33ad47b1c97dd69cf99f224
-      size: 109
+      md5: 7d13964b58961b1a817da2c066884ffd
+      size: 111
   bilstm:
     cmd: python pipeline/BiLSTM.py
     deps:
     - path: pipeline/BiLSTM.py
       hash: md5
-      md5: 9ca15d9eabed7099edac90ed99d5cbab
-      size: 5145
+      md5: 65b73c0927e281abec3b9a335e460a1b
+      size: 5257
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -203,16 +203,16 @@ stages:
     outs:
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: 700bf219118939cbe15101d33e29be8c
-      size: 925
+      md5: e7e920d3f6a4ff01a52a29732ca9a22f
+      size: 924
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 162fabde43b059192e80041c56bfa746
-      size: 110
+      md5: 8600f0b6d768e0df3deaea1aa6051a79
+      size: 109
     - path: results/daily/bilstm_validation.png
       hash: md5
-      md5: bc6f3051513a970c04079b1ac23d9ab4
-      size: 543578
+      md5: 14a0023f878ef87a3679c1edf5029efb
+      size: 557127
   monthly:
     cmd: python pipeline/ingest_monthly.py && python 
       pipeline/monthly_forecast.py
@@ -263,8 +263,8 @@ stages:
     deps:
     - path: pipeline/daily_forecast.py
       hash: md5
-      md5: 7291d520a0fb894913f41df39e54a902
-      size: 14737
+      md5: 67d148e5cbd9d8f476cdb52b5cde45ed
+      size: 20296
     - path: pipeline/forecast_utils.py
       hash: md5
       md5: deca8657c82917695a25a12e2b557691
@@ -279,12 +279,12 @@ stages:
       size: 114
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: 700bf219118939cbe15101d33e29be8c
-      size: 925
+      md5: e7e920d3f6a4ff01a52a29732ca9a22f
+      size: 924
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 162fabde43b059192e80041c56bfa746
-      size: 110
+      md5: 8600f0b6d768e0df3deaea1aa6051a79
+      size: 109
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -295,8 +295,8 @@ stages:
       size: 900
     - path: results/daily/prophet_metrics.csv
       hash: md5
-      md5: 99fabc4bf33ad47b1c97dd69cf99f224
-      size: 109
+      md5: 7d13964b58961b1a817da2c066884ffd
+      size: 111
     - path: results/daily/sarima_forecast.csv
       hash: md5
       md5: 8003f7bb07d41b1478a428a36ef216bf
@@ -312,9 +312,9 @@ stages:
       size: 2302
     - path: results/daily/daily_model_metrics.csv
       hash: md5
-      md5: f02b4573e05cf6c390ad82fe75514615
-      size: 356
+      md5: f1c4cbf79ad39c98a9cf581b771b639d
+      size: 357
     - path: results/daily/daily_trends.png
       hash: md5
-      md5: e3f39b40dd14a96ed0c8bc9c0aa6dcca
-      size: 814400
+      md5: 94d5db3bf9dfbc0d6f6a625136c03518
+      size: 1051780

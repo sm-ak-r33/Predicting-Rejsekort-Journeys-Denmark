@@ -8,11 +8,13 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from forecast_utils import apply_weekday_floor, inverse_log1p_forecast
 
 warnings.filterwarnings("ignore")
+
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DAILY = ROOT / "results" / "daily"
 DATA = RESULTS_DAILY / "data_cleaned.csv"
 OUT = RESULTS_DAILY / "autoarima_metrics.csv"
 OUT_FORECAST = RESULTS_DAILY / "autoarima_forecast.csv"
+OUT_VALIDATION = RESULTS_DAILY / "autoarima_validation.csv"
 HORIZON_DAYS = 30
 
 
@@ -59,19 +61,32 @@ if __name__ == "__main__":
     RESULTS_DAILY.mkdir(parents=True, exist_ok=True)
     series = load_series()
     log_series = np.log1p(series)
+
     split = max(int(len(series) * 0.8), 1)
     train, test = series.iloc[:split], series.iloc[split:]
     train_log = log_series.iloc[:split]
 
     model = fit_auto_arima(train_log)
-
     if len(test) >= 2:
         pred_log = model.predict(n_periods=len(test))
         pred = inverse_log1p_forecast(pred_log)
         pred = apply_weekday_floor(pred, test.index, train)
+
         pd.DataFrame([eval_metrics(test.values, pred)]).to_csv(OUT, index=False)
+        pd.DataFrame({
+            "date": test.index,
+            "actual": test.values,
+            "autoarima": pred,
+        }).to_csv(OUT_VALIDATION, index=False)
     else:
-        pd.DataFrame([{"algorithm": "AutoARIMA", "rmse": np.nan, "mae": np.nan, "mape": np.nan, "r2": np.nan}]).to_csv(OUT, index=False)
+        pd.DataFrame([{
+            "algorithm": "AutoARIMA",
+            "rmse": np.nan,
+            "mae": np.nan,
+            "mape": np.nan,
+            "r2": np.nan,
+        }]).to_csv(OUT, index=False)
+        pd.DataFrame(columns=["date", "actual", "autoarima"]).to_csv(OUT_VALIDATION, index=False)
 
     full_model = fit_auto_arima(log_series)
     future_idx = pd.date_range(series.index.max() + pd.Timedelta(days=1), periods=HORIZON_DAYS, freq="D")

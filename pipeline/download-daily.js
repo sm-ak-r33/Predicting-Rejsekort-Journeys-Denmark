@@ -95,7 +95,7 @@ async function exportExcel(page, frame, outputName) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext({
     acceptDownloads: true,
     viewport: { width: 1600, height: 1000 },

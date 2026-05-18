@@ -1,0 +1,68 @@
+# Replace only these DAILY stage blocks in dvc.yaml.
+# This adds validation prediction CSVs as DVC-managed outputs/dependencies so the zoomed daily panel can be validation-only.
+
+selected_arima:
+  cmd: python pipeline/selected_arima.py
+  deps:
+    - results/daily/data_cleaned.csv
+    - pipeline/selected_arima.py
+    - pipeline/forecast_utils.py
+  outs:
+    - results/daily/sarima_metrics.csv
+    - results/daily/sarima_forecast.csv
+    - results/daily/sarima_validation.csv
+
+autoarima:
+  cmd: python pipeline/autoarima.py
+  deps:
+    - results/daily/data_cleaned.csv
+    - pipeline/autoarima.py
+    - pipeline/forecast_utils.py
+  outs:
+    - results/daily/autoarima_metrics.csv
+    - results/daily/autoarima_forecast.csv
+    - results/daily/autoarima_validation.csv
+
+prophet:
+  cmd: python pipeline/prophet_model.py
+  deps:
+    - results/daily/data_cleaned.csv
+    - pipeline/prophet_model.py
+  outs:
+    - results/daily/prophet_metrics.csv
+    - results/daily/prophet_forecast.csv
+    - results/daily/prophet_validation.csv
+
+bilstm:
+  cmd: python pipeline/BiLSTM.py
+  deps:
+    - results/daily/data_cleaned.csv
+    - pipeline/BiLSTM.py
+  outs:
+    - results/daily/bilstm_metrics.csv
+    - results/daily/bilstm_forecast.csv
+    - results/daily/bilstm_validation.png
+    - results/daily/bilstm_validation_predictions.csv
+
+daily_forecast:
+  cmd: python pipeline/daily_forecast.py
+  deps:
+    - results/daily/data_cleaned.csv
+    - results/daily/sarima_metrics.csv
+    - results/daily/sarima_forecast.csv
+    - results/daily/sarima_validation.csv
+    - results/daily/autoarima_metrics.csv
+    - results/daily/autoarima_forecast.csv
+    - results/daily/autoarima_validation.csv
+    - results/daily/prophet_metrics.csv
+    - results/daily/prophet_forecast.csv
+    - results/daily/prophet_validation.csv
+    - results/daily/bilstm_metrics.csv
+    - results/daily/bilstm_forecast.csv
+    - results/daily/bilstm_validation_predictions.csv
+    - pipeline/daily_forecast.py
+    - pipeline/forecast_utils.py
+  outs:
+    - results/daily/daily_forecast.csv
+    - results/daily/daily_model_metrics.csv
+    - results/daily/daily_trends.png
