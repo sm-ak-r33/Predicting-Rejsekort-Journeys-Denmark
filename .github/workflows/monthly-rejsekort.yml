@@ -46,20 +46,25 @@ jobs:
           pip install -r requirements.txt
 
       - name: Install Node dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Install Playwright Chromium headless shell
-        run: npx playwright install --with-deps --only-shell chromium
+      - name: Install Playwright browsers locally
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0
+        run: npx playwright install --with-deps chromium
 
-      - name: Verify Playwright browser install
+      - name: Verify Playwright local install
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0
         run: |
           npx playwright --version
-          npx playwright install --list
-          node -e "const { chromium } = require('playwright'); console.log('Chromium path:', chromium.executablePath())"
-
+          node -e "console.log('Playwright package:', require.resolve('playwright')); console.log('Playwright version:', require('playwright/package.json').version); const { chromium } = require('playwright'); console.log('Chromium path:', chromium.executablePath());"
+          find node_modules/playwright-core/.local-browsers -maxdepth 2 -type d | sort
 
       - name: Run monthly DVC pipeline
-        run: xvfb-run -a python -m dvc repro monthly --force
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: 0
+        run: python -m dvc repro monthly --force
 
       - name: Commit updated monthly outputs
         run: |
