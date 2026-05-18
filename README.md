@@ -39,7 +39,7 @@ After `python -m dvc repro --force` runs, the latest output plots are written to
 
 ### Monthly forecast trend
 
-![Monthly forecast trend](results/monthly/monthly_trends.png)
+![Monthly Rejsekort forecast](docs/assets/monthly_trends.png)
 
 ## Result folders
 
