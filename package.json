@@ -7,6 +7,6 @@
     "ingest:monthly": "node pipeline/download-monthly.js && node \"pipeline/download-mothly-script 2.js\""
   },
   "dependencies": {
-    "playwright": "latest"
+    "playwright": "^1.60.0"
   }
 }
