@@ -168,9 +168,14 @@ Run only the monthly pipeline:
 python -m dvc repro monthly --force
 ```
 
+```bash
+git add dvc.lock docs/assets/monthly_trends.png
+```
+
+
 ## GitHub Actions schedule
 
-The workflow is monthly, not overnight. It runs on the first day of each month at 04:00 UTC:
+The workflow is monthly. It runs on the first day of each month at 04:00 UTC:
 
 ```yaml
 schedule:

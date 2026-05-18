@@ -12,7 +12,7 @@ async function snap(page, label) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: false, slowMo: 100 });
+  const browser = await chromium.launch({ headless: true, slowMo: 100 });
   const context = await browser.newContext({
     acceptDownloads: true,
     viewport: { width: 1600, height: 1000 },

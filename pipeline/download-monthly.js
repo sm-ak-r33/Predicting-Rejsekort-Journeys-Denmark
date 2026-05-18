@@ -6,7 +6,7 @@ const URL =
 
 (async () => {
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
     slowMo: 150,
   });
 

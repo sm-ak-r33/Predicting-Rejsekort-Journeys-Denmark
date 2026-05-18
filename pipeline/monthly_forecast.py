@@ -4,7 +4,7 @@ import math
 import os
 import warnings
 from typing import Dict, Iterable, Tuple
-
+import shutil
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
@@ -473,6 +473,14 @@ def plot_monthly(series: pd.Series, forecast: pd.DataFrame, metrics: pd.DataFram
 
     fig.savefig(OUT_PNG, dpi=220, bbox_inches="tight")
     plt.close(fig)
+
+    README_ASSETS_DIR = Path("docs/assets")
+    README_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+
+    readme_plot_path = README_ASSETS_DIR / "monthly_trends.png"
+    shutil.copyfile(OUT_PNG, readme_plot_path)
+
+    print(f"Saved preview plot: {readme_plot_path}")
 
 
 def main() -> None:
