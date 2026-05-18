@@ -51,6 +51,12 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Check Playwright install
+        run: |
+          npx playwright --version
+          ls -la ~/.cache/ms-playwright || true
+
+
       - name: Run monthly DVC pipeline
         run: xvfb-run -a python -m dvc repro monthly --force
 
