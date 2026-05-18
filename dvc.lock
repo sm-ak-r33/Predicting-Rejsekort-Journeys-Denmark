@@ -61,7 +61,8 @@ stages:
       md5: 292b026b47180e21991024c097d0c2d6
       size: 4704
   ingest:
-    cmd: node pipeline/download-daily.js && python pipeline/prepare_daily_ingest.py
+    cmd: node pipeline/download-daily.js && python 
+      pipeline/prepare_daily_ingest.py
     deps:
     - path: pipeline/download-daily.js
       hash: md5
@@ -213,7 +214,8 @@ stages:
       md5: ae9b078a16b60883580319a305b617a6
       size: 546986
   monthly:
-    cmd: python pipeline/ingest_monthly.py && python pipeline/monthly_forecast.py
+    cmd: python pipeline/ingest_monthly.py && python 
+      pipeline/monthly_forecast.py
     deps:
     - path: pipeline/download-monthly.js
       hash: md5
@@ -238,23 +240,23 @@ stages:
       size: 3601
     - path: results/monthly/monthly_forecast.csv
       hash: md5
-      md5: ad9a2cad183e02f73b436189158c40b0
-      size: 1264
+      md5: 058c63c40c8b3d175003aad15fd40149
+      size: 1266
     - path: results/monthly/monthly_model_metrics.csv
       hash: md5
-      md5: 6933ddcf115966f2b3d9a40506c565f5
-      size: 246
+      md5: 8a8ccf16d54f11562ed3107e2d59cb7e
+      size: 237
     - path: results/monthly/monthly_trends.png
       hash: md5
-      md5: 41b7e1424399d240f8b12f2718e44457
-      size: 486932
+      md5: f840d51efd7da55934088316166443ab
+      size: 488105
     - path: results/monthly/raw/rejsekort_monthly_chart_export.xlsx
       hash: md5
-      md5: 911e1ed0e44a945357e79721088362fc
-      size: 8198
+      md5: 154bf992c3035fbb8db9fc5d8b0dfb27
+      size: 8195
     - path: results/monthly/raw/rejsekort_monthly_export_extension_data.xlsx
       hash: md5
-      md5: 5e19da56a24b56186521330c32467f64
+      md5: 6a3f1b7612b1a39844d2ad5d8f181490
       size: 5953
   daily_forecast:
     cmd: python pipeline/daily_forecast.py
