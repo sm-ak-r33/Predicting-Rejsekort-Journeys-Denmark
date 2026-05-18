@@ -1,6 +1,9 @@
 from pathlib import Path
 import os
+import shutil
+
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+
 import logging
 import warnings
 import numpy as np
@@ -15,10 +18,14 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 warnings.filterwarnings("ignore")
 logging.getLogger("tensorflow").setLevel(logging.ERROR)
+
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DAILY = ROOT / "results" / "daily"
+DOCS_ASSETS = ROOT / "docs" / "assets"
+
 DATA = RESULTS_DAILY / "data_cleaned.csv"
 OUT_PNG = RESULTS_DAILY / "bilstm_validation.png"
+OUT_README_PNG = DOCS_ASSETS / "bilstm_validation.png"
 OUT_METRICS = RESULTS_DAILY / "bilstm_metrics.csv"
 OUT_FORECAST = RESULTS_DAILY / "bilstm_forecast.csv"
 HORIZON_DAYS = 30
@@ -39,14 +46,22 @@ def _format_axis(ax):
     ax.grid(True, alpha=0.25)
 
 
+def _copy_readme_asset():
+    DOCS_ASSETS.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(OUT_PNG, OUT_README_PNG)
+    print("Saved README preview plot: %s" % OUT_README_PNG)
+
+
 if __name__ == "__main__":
     RESULTS_DAILY.mkdir(parents=True, exist_ok=True)
     np.random.seed(40)
+
     df = pd.read_csv(DATA, parse_dates=["date"]).sort_values("date")
     if df.empty:
         raise ValueError("results/daily/data_cleaned.csv has no usable rows.")
 
     series = df.set_index("date")["passengers"].asfreq("D").interpolate(limit_direction="both")
+
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled = scaler.fit_transform(series.values.reshape(-1, 1))
     look_back = min(30, max(7, len(series) // 10))
@@ -77,6 +92,7 @@ if __name__ == "__main__":
 
     y_pred = scaler.inverse_transform(model.predict(X_test, verbose=0)).flatten()
     y_true = scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
+
     metrics = {
         "algorithm": "BiLSTM",
         "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
@@ -105,6 +121,7 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.savefig(OUT_PNG, dpi=180)
     plt.close(fig)
+    _copy_readme_asset()
 
     rolling_values = scaled.copy().tolist()
     future_scaled = []

@@ -66,8 +66,8 @@ stages:
     deps:
     - path: pipeline/download-daily.js
       hash: md5
-      md5: a35aa372feb56599c5e0b2da474d6478
-      size: 4470
+      md5: 23347cda90972a45f27984391937f731
+      size: 4471
     - path: pipeline/prepare_daily_ingest.py
       hash: md5
       md5: 021a45bb181237f328b01f9749136a8e
@@ -75,11 +75,11 @@ stages:
     outs:
     - path: Data(update).xlsx
       hash: md5
-      md5: 899e2c98fbb721affef5fb3c27ae6c80
+      md5: 2bcb9f065edca88340ba5530969e583b
       size: 13090
     - path: pipeline/rejsekort_latest_year_daily_export.xlsx
       hash: md5
-      md5: 899e2c98fbb721affef5fb3c27ae6c80
+      md5: 2bcb9f065edca88340ba5530969e583b
       size: 13090
   ingest_monthly_chart:
     cmd: node pipeline/download-monthly.js
@@ -110,7 +110,7 @@ stages:
     deps:
     - path: Data(update).xlsx
       hash: md5
-      md5: 899e2c98fbb721affef5fb3c27ae6c80
+      md5: 2bcb9f065edca88340ba5530969e583b
       size: 13090
     - path: pipeline/preprocessing.py
       hash: md5
@@ -194,8 +194,8 @@ stages:
     deps:
     - path: pipeline/BiLSTM.py
       hash: md5
-      md5: b1448c28ba37f2ef27c9c7a16c10202d
-      size: 4821
+      md5: 9ca15d9eabed7099edac90ed99d5cbab
+      size: 5145
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -203,16 +203,16 @@ stages:
     outs:
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: 50589c01656ca90e332440e5b07ef320
-      size: 926
+      md5: 700bf219118939cbe15101d33e29be8c
+      size: 925
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 0691413cbc5c0befe25970d673fae8f5
-      size: 107
+      md5: 162fabde43b059192e80041c56bfa746
+      size: 110
     - path: results/daily/bilstm_validation.png
       hash: md5
-      md5: ae9b078a16b60883580319a305b617a6
-      size: 546986
+      md5: bc6f3051513a970c04079b1ac23d9ab4
+      size: 543578
   monthly:
     cmd: python pipeline/ingest_monthly.py && python 
       pipeline/monthly_forecast.py
@@ -231,8 +231,8 @@ stages:
       size: 10203
     - path: pipeline/monthly_forecast.py
       hash: md5
-      md5: b803556a0c301fbdf7a704cd05e1e1f0
-      size: 18350
+      md5: 72d4ad4a3e6b31b0396044f2f4d4b9db
+      size: 20309
     outs:
     - path: results/monthly/monthly_cleaned.csv
       hash: md5
@@ -240,31 +240,31 @@ stages:
       size: 3601
     - path: results/monthly/monthly_forecast.csv
       hash: md5
-      md5: ad2dce8d1a13cc8ee77084fbf87b9f14
-      size: 1271
+      md5: 01bd298c6bc1e34d1408105283748367
+      size: 1267
     - path: results/monthly/monthly_model_metrics.csv
       hash: md5
-      md5: 9b282078bbff2b5a0f104195af54080d
-      size: 247
+      md5: d458de525017deb5adadb0c1b803b60d
+      size: 244
     - path: results/monthly/monthly_trends.png
       hash: md5
-      md5: 899679688d35eb3d76d2399fb42dd7dc
-      size: 489872
+      md5: 1a85e2d350e450033935dc5334cc6940
+      size: 508236
     - path: results/monthly/raw/rejsekort_monthly_chart_export.xlsx
       hash: md5
-      md5: c9c3f2bc5c60174c4b307a0bd7b85c5a
+      md5: dac2deeb2896114404dd11755be017d9
       size: 8198
     - path: results/monthly/raw/rejsekort_monthly_export_extension_data.xlsx
       hash: md5
-      md5: 9758d98e478e345c90ea3b9abe2e6e2e
-      size: 5952
+      md5: 13e866d1278019f3fee97b3a23d7f53c
+      size: 5955
   daily_forecast:
     cmd: python pipeline/daily_forecast.py
     deps:
     - path: pipeline/daily_forecast.py
       hash: md5
-      md5: 40b3364a245db71a2c616b157d2f011c
-      size: 9618
+      md5: 7291d520a0fb894913f41df39e54a902
+      size: 14737
     - path: pipeline/forecast_utils.py
       hash: md5
       md5: deca8657c82917695a25a12e2b557691
@@ -279,12 +279,12 @@ stages:
       size: 114
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: 50589c01656ca90e332440e5b07ef320
-      size: 926
+      md5: 700bf219118939cbe15101d33e29be8c
+      size: 925
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 0691413cbc5c0befe25970d673fae8f5
-      size: 107
+      md5: 162fabde43b059192e80041c56bfa746
+      size: 110
     - path: results/daily/data_cleaned.csv
       hash: md5
       md5: b51948cf900b8c5e6da44e3ab08e7058
@@ -312,9 +312,9 @@ stages:
       size: 2302
     - path: results/daily/daily_model_metrics.csv
       hash: md5
-      md5: df17a2ec8d71c02d7ebf157d85bc6016
-      size: 353
+      md5: f02b4573e05cf6c390ad82fe75514615
+      size: 356
     - path: results/daily/daily_trends.png
       hash: md5
-      md5: c53e34e18d97a7f12518d525d34fb2ac
-      size: 537374
+      md5: e3f39b40dd14a96ed0c8bc9c0aa6dcca
+      size: 814400

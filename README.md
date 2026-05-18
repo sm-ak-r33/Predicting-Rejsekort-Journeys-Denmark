@@ -169,7 +169,7 @@ python -m dvc repro monthly --force
 ```
 
 ```bash
-git add dvc.lock docs/assets/monthly_trends.png
+git add dvc.lock docs/assets/daily_trends.png docs/assets/bilstm_validation.png docs/assets/monthly_trends.png README.md
 ```
 
 
