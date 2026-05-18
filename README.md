@@ -30,16 +30,16 @@ After `python -m dvc repro --force` runs, the latest output plots are written to
 ## Output plots
 
 ### Daily forecast trend
+![Daily forecast trend](docs/assets/daily_trends.png)
 
-![Daily forecast trend](results/daily/daily_trends.png)
-
-### Daily BiLSTM validation
-
-![BiLSTM validation](results/daily/bilstm_validation.png)
+### Daily BiLSTM(Best Model) validation zoomed-in
+![BiLSTM validation](docs/assets/bilstm_validation.png)
 
 ### Monthly forecast trend
 
 ![Monthly Rejsekort forecast](docs/assets/monthly_trends.png)
+
+Here Ensemble is a simple average of the top 2 best-performing models from validation.
 
 ## Result folders
 
