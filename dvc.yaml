@@ -5,14 +5,14 @@ stages:
       - pipeline/download-daily.js
       - pipeline/prepare_daily_ingest.py
     outs:
-      - Data(update).xlsx
+      - Data(update).xlsx:
+          persist: true
       - pipeline/rejsekort_latest_year_daily_export.xlsx
 
   preprocess:
     cmd: python pipeline/preprocessing.py
     deps:
-      - Data(update).xlsx:
-          persist: true
+      - Data(update).xlsx    
       - pipeline/preprocessing.py
     outs:
       - results/daily/data_cleaned.csv
