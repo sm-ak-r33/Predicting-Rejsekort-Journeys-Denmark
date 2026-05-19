@@ -1,6 +1,6 @@
 # Predicting Rejsekort Journeys
 
-This repository automatically downloads Rejsekort passenger journey data from passagertal.dk and runs daily and monthly forecasting pipelines.
+This repository automatically fetches Rejsekort passenger journey data from passagertal.dk and runs daily and monthly forecasting pipelines automatically via github actions.
 
 
 ```bash
@@ -11,11 +11,11 @@ The JavaScript download scripts remain the ingestion layer. They are kept in hea
 
 The details for feature engineering for the statistical models can be found in the paper [here](https://github.com/sm-ak-r33/Predicting-Rejsekort-Price-Increase-2023/blob/main/rejsekort.pdf)  
 
-Daily preprocessing rejects non-daily hierarchy rows from the Excel export. The downloaded crosstab can contain rows like year totals and month totals in the same date hierarchy. Pandas/dateutil can accidentally interpret a value like `2024` as `2024-01-01`, which creates artificial January spikes. The cleaner now only accepts true day-level dates and drops aggregate spikes before modelling.
+Daily preprocessing rejects non-daily hierarchy rows from the Excel export.
 
 The SARIMA and AutoARIMA daily models are fitted on a `log1p` transformed series and converted back with `expm1`. Their outputs also use a conservative day-of-week historical floor. This prevents ARIMA-family models from turning negative forecasts into impossible zero-passenger days while still preserving weekend/weekday seasonality.
 
-All generated results are grouped under `results/` instead of being scattered in the repository root.
+All generated results are grouped under `results/`.
 
 ## Result plots
 
@@ -181,6 +181,8 @@ The workflow is monthly. It runs on the first day of each month at 04:00 UTC:
 schedule:
   - cron: "0 4 1 * *"
 ```
+
+For the daily forecasting data is available annually so it does automatic forecasting every year. 
 
 Also can start manually from the GitHub Actions tab with `workflow_dispatch`.
 
