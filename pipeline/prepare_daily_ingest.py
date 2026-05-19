@@ -10,21 +10,24 @@ TARGET = ROOT / "Data(update).xlsx"
 if not SOURCE.exists():
     raise FileNotFoundError(f"Daily export was not created: {SOURCE}")
 
-# Reuse the robust daily parsing already used by preprocessing.py
-from pipeline.preprocessing import _read_excel, clean_dataframe, append_and_update
+# Import from sibling file because this script is run as:
+# python pipeline/prepare_daily_ingest.py
+from preprocessing import _read_excel, clean_dataframe, append_and_update
 
 try:
     # New latest-year export from the JS scraper
     latest = clean_dataframe(_read_excel(SOURCE))
 
     # Existing retained update workbook from previous years, if present
-    existing = clean_dataframe(_read_excel(TARGET)) if TARGET.exists() else pd.DataFrame(
-        columns=["date", "passengers"]
-    )
+    if TARGET.exists():
+        existing = clean_dataframe(_read_excel(TARGET))
+    else:
+        existing = pd.DataFrame(columns=["date", "passengers"])
 
     # Keep old years, replace overlapping dates with the newest scraped values
     retained = append_and_update(existing, latest)
 
+    TARGET.parent.mkdir(parents=True, exist_ok=True)
     retained.to_excel(TARGET, index=False)
 
     print(f"Saved retained daily update workbook: {TARGET} ({len(retained)} rows)")

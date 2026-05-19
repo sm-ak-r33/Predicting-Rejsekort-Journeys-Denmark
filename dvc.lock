@@ -70,17 +70,17 @@ stages:
       size: 4471
     - path: pipeline/prepare_daily_ingest.py
       hash: md5
-      md5: 021a45bb181237f328b01f9749136a8e
-      size: 622
+      md5: d22bcbbb55fb0400204fc7b3ee229bf4
+      size: 1356
     outs:
     - path: Data(update).xlsx
       hash: md5
-      md5: 2bcb9f065edca88340ba5530969e583b
-      size: 13090
+      md5: ebfc1f0a8556fd23deb5077a442f4ec9
+      size: 10840
     - path: pipeline/rejsekort_latest_year_daily_export.xlsx
       hash: md5
-      md5: 2bcb9f065edca88340ba5530969e583b
-      size: 13090
+      md5: cf8a48c11af9755de0fde6304ffcc438
+      size: 13091
   ingest_monthly_chart:
     cmd: node pipeline/download-monthly.js
     deps:
