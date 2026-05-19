@@ -75,11 +75,11 @@ stages:
     outs:
     - path: Data(update).xlsx
       hash: md5
-      md5: ebfc1f0a8556fd23deb5077a442f4ec9
-      size: 10840
+      md5: 8663086160634f8fe0e54f78fccf40e3
+      size: 10838
     - path: pipeline/rejsekort_latest_year_daily_export.xlsx
       hash: md5
-      md5: cf8a48c11af9755de0fde6304ffcc438
+      md5: 2e7bb33fd56333c24bf226eb6735dcb5
       size: 13091
   ingest_monthly_chart:
     cmd: node pipeline/download-monthly.js
@@ -110,8 +110,8 @@ stages:
     deps:
     - path: Data(update).xlsx
       hash: md5
-      md5: 2bcb9f065edca88340ba5530969e583b
-      size: 13090
+      md5: 8663086160634f8fe0e54f78fccf40e3
+      size: 10838
     - path: pipeline/preprocessing.py
       hash: md5
       md5: b4d7010be01d2b83e6def5f21453f92c
@@ -119,8 +119,8 @@ stages:
     outs:
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
   selected_arima:
     cmd: python pipeline/selected_arima.py
     deps:
@@ -134,17 +134,17 @@ stages:
       size: 3111
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
     outs:
     - path: results/daily/sarima_forecast.csv
       hash: md5
-      md5: 8003f7bb07d41b1478a428a36ef216bf
-      size: 736
+      md5: c0e1c733cbedf4483d9ba6f0c96afa67
+      size: 705
     - path: results/daily/sarima_metrics.csv
       hash: md5
-      md5: 33b04272958ef12fe102d99bf6ed6f47
-      size: 109
+      md5: c47c4e9be1529f6f4a776e38ee99da62
+      size: 110
   autoarima:
     cmd: python pipeline/autoarima.py
     deps:
@@ -158,17 +158,17 @@ stages:
       size: 3289
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
     outs:
     - path: results/daily/autoarima_forecast.csv
       hash: md5
-      md5: 66a22c2a90c53b2150eae80551de5718
-      size: 739
+      md5: c68dc8a540cfe42fb6ac03ac6df4d750
+      size: 708
     - path: results/daily/autoarima_metrics.csv
       hash: md5
-      md5: a59e0c2a8b579830b234bfe71ed827d2
-      size: 114
+      md5: c6cda18f1004a607cfc76e3e54dda474
+      size: 112
   prophet:
     cmd: python pipeline/prophet_model.py
     deps:
@@ -178,17 +178,17 @@ stages:
       size: 2770
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
     outs:
     - path: results/daily/prophet_forecast.csv
       hash: md5
-      md5: 88b729753726b9a450a3d143e84d9839
-      size: 900
+      md5: 0f7a824bd7ff1baf65df73836543fc5c
+      size: 873
     - path: results/daily/prophet_metrics.csv
       hash: md5
-      md5: 7d13964b58961b1a817da2c066884ffd
-      size: 111
+      md5: 4623397a3fd99c6d7798aa3cfb438c0d
+      size: 108
   bilstm:
     cmd: python pipeline/BiLSTM.py
     deps:
@@ -198,21 +198,21 @@ stages:
       size: 5257
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
     outs:
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: e7e920d3f6a4ff01a52a29732ca9a22f
-      size: 924
+      md5: 02eeca031c6e5d7487394a33b2326693
+      size: 881
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 8600f0b6d768e0df3deaea1aa6051a79
-      size: 109
+      md5: f2fc7de8b16206b5376ae8ede440e070
+      size: 106
     - path: results/daily/bilstm_validation.png
       hash: md5
-      md5: 14a0023f878ef87a3679c1edf5029efb
-      size: 557127
+      md5: cc22914851e43e20879f853189d0ac5c
+      size: 535543
   monthly:
     cmd: python pipeline/ingest_monthly.py && python 
       pipeline/monthly_forecast.py
@@ -271,50 +271,50 @@ stages:
       size: 3289
     - path: results/daily/autoarima_forecast.csv
       hash: md5
-      md5: 66a22c2a90c53b2150eae80551de5718
-      size: 739
+      md5: c68dc8a540cfe42fb6ac03ac6df4d750
+      size: 708
     - path: results/daily/autoarima_metrics.csv
       hash: md5
-      md5: a59e0c2a8b579830b234bfe71ed827d2
-      size: 114
+      md5: c6cda18f1004a607cfc76e3e54dda474
+      size: 112
     - path: results/daily/bilstm_forecast.csv
       hash: md5
-      md5: e7e920d3f6a4ff01a52a29732ca9a22f
-      size: 924
+      md5: 02eeca031c6e5d7487394a33b2326693
+      size: 881
     - path: results/daily/bilstm_metrics.csv
       hash: md5
-      md5: 8600f0b6d768e0df3deaea1aa6051a79
-      size: 109
+      md5: f2fc7de8b16206b5376ae8ede440e070
+      size: 106
     - path: results/daily/data_cleaned.csv
       hash: md5
-      md5: b51948cf900b8c5e6da44e3ab08e7058
-      size: 99368
+      md5: 519abbe40897fb59da168ada8a92b29d
+      size: 94619
     - path: results/daily/prophet_forecast.csv
       hash: md5
-      md5: 88b729753726b9a450a3d143e84d9839
-      size: 900
+      md5: 0f7a824bd7ff1baf65df73836543fc5c
+      size: 873
     - path: results/daily/prophet_metrics.csv
       hash: md5
-      md5: 7d13964b58961b1a817da2c066884ffd
-      size: 111
+      md5: 4623397a3fd99c6d7798aa3cfb438c0d
+      size: 108
     - path: results/daily/sarima_forecast.csv
       hash: md5
-      md5: 8003f7bb07d41b1478a428a36ef216bf
-      size: 736
+      md5: c0e1c733cbedf4483d9ba6f0c96afa67
+      size: 705
     - path: results/daily/sarima_metrics.csv
       hash: md5
-      md5: 33b04272958ef12fe102d99bf6ed6f47
-      size: 109
+      md5: c47c4e9be1529f6f4a776e38ee99da62
+      size: 110
     outs:
     - path: results/daily/daily_forecast.csv
       hash: md5
-      md5: 66fbe92c4317d8b24f129fe2ac990741
-      size: 2302
+      md5: caf80d704ffed9d81b9bec22104fd82e
+      size: 2267
     - path: results/daily/daily_model_metrics.csv
       hash: md5
-      md5: f1c4cbf79ad39c98a9cf581b771b639d
-      size: 357
+      md5: 88066e61d912e8578c9e546590f1fb10
+      size: 352
     - path: results/daily/daily_trends.png
       hash: md5
-      md5: 94d5db3bf9dfbc0d6f6a625136c03518
-      size: 1051780
+      md5: fc4eed5ae608732941e2e3eae39de834
+      size: 1050057
