@@ -11,7 +11,8 @@ stages:
   preprocess:
     cmd: python pipeline/preprocessing.py
     deps:
-      - Data(update).xlsx
+      - Data(update).xlsx:
+          persist: true
       - pipeline/preprocessing.py
     outs:
       - results/daily/data_cleaned.csv
