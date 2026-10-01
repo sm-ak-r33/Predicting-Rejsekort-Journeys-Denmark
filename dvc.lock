@@ -236,28 +236,28 @@ stages:
     outs:
     - path: results/monthly/monthly_cleaned.csv
       hash: md5
-      md5: 50a82239cce8efc6e41acccee3ffd828
-      size: 3504
+      md5: 2582c9d83520f65fe04b02e04393789f
+      size: 4003
     - path: results/monthly/monthly_forecast.csv
       hash: md5
-      md5: 9b0299f597f7e66eb86e43f16328f782
-      size: 1244
+      md5: 4285ca02edd7ef987a33188691eeb126
+      size: 1163
     - path: results/monthly/monthly_model_metrics.csv
       hash: md5
-      md5: 87df5514288aefccd9d9e515c78f71c8
-      size: 232
+      md5: 15c424df3e8dc73e705706bb1dca3fd0
+      size: 243
     - path: results/monthly/monthly_trends.png
       hash: md5
-      md5: 61d92451dfb7c1a07f6068f5b5b6c64e
-      size: 492468
+      md5: bb9e741b8d37c8364deebf77294310ad
+      size: 434785
     - path: results/monthly/raw/rejsekort_monthly_chart_export.xlsx
       hash: md5
-      md5: 6fc9cf82cbebc2603c1b9ac35dc1dd31
-      size: 8199
+      md5: 8449f889cdf81adf47801bd57ca40754
+      size: 5446
     - path: results/monthly/raw/rejsekort_monthly_export_extension_data.xlsx
       hash: md5
-      md5: 39364755906a2f65bd7ea47b40b81d29
-      size: 5974
+      md5: 44d90aedd4a5b5a402d6b3473a1b3e7a
+      size: 6136
   daily_forecast:
     cmd: python pipeline/daily_forecast.py
     deps:
